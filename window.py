@@ -2,6 +2,8 @@
 
 import sys
 
+from filters_config import Filter
+
 from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QComboBox,
 							QLineEdit, QInputDialog, QPushButton, QAction)
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QIntValidator
@@ -9,9 +11,11 @@ from PyQt5.QtCore import Qt, pyqtSlot
 
 class Example(QWidget):
 
-	title = 'BURAN'
-	width, height = 700, 500
-	filter_type, samplef, tapsn = 0, 0, 0
+	title = '¯\_(ツ)_/¯'
+	width, height = 800, 500
+
+	cutoff_freq_list = []
+	filter_type, sample_freq, taps_num = 0, 0, 0
 
 	def __init__(self):
 		super().__init__()
@@ -25,6 +29,7 @@ class Example(QWidget):
 		self.combo(self)
 		self.sampleFreq(self)
 		self.tapsNum(self)
+		self.generate_button(self)
 
 		self.show()
 
@@ -35,6 +40,7 @@ class Example(QWidget):
 
 		qp.begin(self)
 		self.backgroundColor(qp, size)
+		#self.generate(size)
 		#print (self.filter_type, self.samplef, self.tapsn)
 		qp.end()
 
@@ -48,8 +54,8 @@ class Example(QWidget):
 
 		sample_freq = 0
 		def on_click():
-			sample_freq = self.samplef.text()
-			self.samplef = sample_freq
+			self.sample_freq = float(self.samplef.text())
+			self.samplef = self.sample_freq
 			print (sample_freq)
 
 		self.lbl = QLabel("Sampling freq.(Hz)", self)
@@ -70,11 +76,9 @@ class Example(QWidget):
 
 	def tapsNum(self, text):
 
-		num_taps = 0
 		def on_click():
-			num_taps = self.taps.text()
-			self.tapsn = num_taps
-			print (num_taps)
+			self.taps_num = int(self.taps.text())
+			#print (self.taps_num)
 
 		self.lbl = QLabel("Numbers of taps", self)
 		self.lbl.move(390, 12)
@@ -97,14 +101,37 @@ class Example(QWidget):
 		self.lbl.move(30, 12)
 
 		def onActivated(text):
-			filter_type = text
-			print (text)
+			self.filter_type = text
 		
 		combo = QComboBox(self)
-		combo.addItems(["Low-pass", "Band-pass", "High-pass"])
+		combo.addItems(["–", "Low-pass", "Band-pass", "High-pass"])
 		combo.activated[str].connect(onActivated)
 		combo.move(25, 30)
 
+
+	def click_generate_button(self, mode):
+		if mode == 'Low-pass':
+			low_pass_filter = Filter().low_pass(
+				self.sample_freq,
+				self.taps_num,
+				10.0)
+		elif mode == 'Band-pass':
+			band_pass_filter = Filter().band_pass(
+				self.sample_freq,
+				self.taps_num)
+		elif mode == 'High-pass':
+			high_pass_filter = Filter().high_pass(
+				self.sample_freq,
+				self.taps_num)
+
+
+	def generate_button(self, size):
+
+		self.button = QPushButton('Generate!', self)
+		self.button.move(465, 60)
+		self.button.resize(100, 40)
+
+		self.button.clicked.connect(lambda: self.click_generate_button(self.filter_type))
 
 
 if __name__ == '__main__':
