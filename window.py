@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+#git init
+#git add *
+#git commit -m "continue pyqt5 and first filters"
+#git push origin master
+
 import sys
 
 from filters_config import Filter
@@ -40,6 +45,10 @@ class Example(QWidget):
 
 		qp.begin(self)
 		self.backgroundColor(qp, size)
+
+		#if self.filter_type == 'Low-pass':
+		#	self.cutoff_low_pass()
+
 		#self.generate(size)
 		#print (self.filter_type, self.samplef, self.tapsn)
 		qp.end()
@@ -56,7 +65,7 @@ class Example(QWidget):
 		def on_click():
 			self.sample_freq = float(self.samplef.text())
 			self.samplef = self.sample_freq
-			print (sample_freq)
+			print (self.sample_freq)
 
 		self.lbl = QLabel("Sampling freq.(Hz)", self)
 		self.lbl.move(190, 12)
@@ -78,7 +87,7 @@ class Example(QWidget):
 
 		def on_click():
 			self.taps_num = int(self.taps.text())
-			#print (self.taps_num)
+			print (self.taps_num)
 
 		self.lbl = QLabel("Numbers of taps", self)
 		self.lbl.move(390, 12)
@@ -109,16 +118,27 @@ class Example(QWidget):
 		combo.move(25, 30)
 
 
+	def cutoff_low_pass(self):
+		self.lbl = QLabel("Cutoff freq.(Hz)", self)
+		self.lbl.move(30, 40)
+
+		#self.cutoff_freq = QLineEdit(self)
+		#self.cutoff_freq.setValidator(QIntValidator(1, 5000, self))
+		#self.cutoff_freq.move()
+
+
 	def click_generate_button(self, mode):
 		if mode == 'Low-pass':
 			low_pass_filter = Filter().low_pass(
 				self.sample_freq,
 				self.taps_num,
-				10.0)
+				50.0)
 		elif mode == 'Band-pass':
 			band_pass_filter = Filter().band_pass(
 				self.sample_freq,
-				self.taps_num)
+				self.taps_num,
+				500.0,
+				1200.0)
 		elif mode == 'High-pass':
 			high_pass_filter = Filter().high_pass(
 				self.sample_freq,
