@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import numpy as np
 from numpy import sin, cos, pi, arange, absolute, sqrt
 from scipy import signal
 from scipy.signal import lfilter, freqz, butter
@@ -22,6 +23,8 @@ class Filter:
 		nyq_rate = sample_freq * 0.5
 		fire_freq = cutoff_freq / nyq_rate
 		taps_result = signal.firwin(taps, fire_freq)
+
+		#print (np.int16(np.rint(taps*2**15)))
 
 		print (taps_result)
 
@@ -64,6 +67,11 @@ class Filter:
 		print (taps_result)
 
 		filtered_x = lfilter(taps_result, 1.0, x)
+
+		figure(1)
+		plot(taps_result, 'bo-', linewidth=2)
+		title('Filter coefficient %d' % taps)
+		grid(True)
 
 		figure(2)
 		clf()
