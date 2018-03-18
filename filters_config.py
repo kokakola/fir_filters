@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+
 from numpy import sin, cos, pi, arange, absolute, sqrt
 from scipy import signal
 from scipy.signal import lfilter, freqz, butter
 from pylab import (	plot, figure, clf, show, grid, xlabel, ylabel,
 					title, xlim, ylim)
+
 
 class Filter:
 
@@ -24,16 +26,19 @@ class Filter:
 		fire_freq = cutoff_freq / nyq_rate
 		taps_result = signal.firwin(taps, fire_freq)
 
-		#print (np.int16(np.rint(taps*2**15)))
+		#print (np.int16(np.rint(taps_result*2**15)))
+		taps_int_16 = np.int16(np.rint(taps_result*2**15))
+		print (taps_int_16)
 
-		print (taps_result)
+		#print (taps_result)
 
 		filtered_x = lfilter(taps_result, 1.0, x)
 
-		figure(1)
+		"""figure(1)
 		plot(taps_result, 'bo-', linewidth=2)
 		title('Filter coefficient %d' % taps)
 		grid(True)
+
 
 		figure(2)
 		clf()
@@ -45,10 +50,12 @@ class Filter:
 		ylim(-0.05, 1.05)
 		grid(True)
 
-		show()
+		show()"""
 
 		#print ('Filter class: low_pass filter. Freq = %s' % sample_freq)
 		#return signal.firwin(numtaps, freq)
+
+		return taps_int_16
 
 	def high_pass(self, sample_freq, taps):
 

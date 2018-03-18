@@ -6,9 +6,17 @@ import getpass
 from time import strftime
 
 class gen_tb:
-	def __init__(self):
+
+	clkName = 'tb_clk'
+	set_freq = 'set_freq'
+
+	def __init__(self, taps_num, taps_list):
 		self.fileName = 'test_file_tb.v'
+		self.taps_num = taps_num
+		self.taps_list = taps_list
+
 		self.newFile()
+
 
 	#описание к файлу
 	def startDesc(self, f):
@@ -17,15 +25,17 @@ class gen_tb:
 		f.write('\n// Author: %s\n//\n' % getpass.getuser())
 		f.write('\n`timescale 1ns / 1ns\n\n')
 
+
 	#описание модуля
 	def moduleDesc(self, f):
 		f.write('module %s ();\n\n' % self.fileName[:-2])
 
+
 	#описание клока
 	def clockDesc(self, f, startTime, periodTime):
-		clkName = 'tb_clk'
-		f.write('reg %s;\ninitial %s = %d;\n' % (clkName, clkName, startTime))
-		f.write('always\n\t#%d %s = ~%s;\n\n' % (periodTime, clkName, clkName))
+		f.write('reg %s;\ninitial %s = %d;\n' % (self.clkName, self.clkName, startTime))
+		f.write('always\n\t#%d %s = ~%s;\n\n' % (periodTime, self.clkName, self.clkName))
+
 
 	#описание переменных
 	def variableDesc(self, f, last_time, current_time, angle, freq):
@@ -36,6 +46,7 @@ class gen_tb:
 		f.write('real frequency = %d;\n' % freq)
 		f.write('integer freq_x100kHz = %d;\n' % 0)
 		f.write('reg signed [15:0]sin16;\n')	#TODO
+
 
 	def funcSin(self, f):
 		y, y3, y5, y7 = 1.570794, 0.645962, 0.079692, 0.004681712
@@ -54,12 +65,96 @@ class gen_tb:
 		f.write('\t\tsin = sign*sum;\n')
 		f.write('\tend\nendfunction\n')
 
+
+	def setFreq(self, f, freq):
+		f.write('\ntask %s;\n' % self.set_freq)
+		f.write('input f;\n')
+		f.write('real f;\n')
+		f.write('begin\n')
+		f.write('\tfrequency = f;\n')
+		f.write('\tfreq_x100kHz = f / %s;\n' % str(freq))
+		f.write('end\n')
+
+
+	def posedgeClk(self, f):
+		f.write('\nalways @(posedge tb_clk)\n')
+		f.write('begin\n')
+		f.write('\tcurrent_time = $realtime;\n')
+
+		f.write('\tangle = angle + (current_time-last_time)')
+		f.write('*2*PI*frequency / %s;\n' % str(1000000000.0))
+
+		f.write('\twhile (angle > PI*2.0)\n')
+		f.write('\tbegin\n')
+		f.write('\t\tangle = angle - PI*2.0;\n')
+		f.write('\tend\n')
+		f.write('\tsin16 = 32000 * sin(angle);\n')
+		f.write('\tlast_time = cuttent_time;\n')
+		f.write('end\n')
+
+
+	def filterDesc(self, f, taps_num, taps_list):
+		out_name = 'out_lowpass'
+		num_taps = taps_num
+		dimension = 57
+
+		f.write('\nwire [%s:0]%s;\n' % (str(dimension), out_name))
+		f.write('fir #( .TAPS(%s)) fir_inst(\n' % num_taps)
+		f.write('\t.clk(%s),\n' % self.clkName)
+
+		f.write('\t.coefs( {\n')
+
+		#TODO: last item (,\n -> \n)
+		for i in range(len(taps_list)):
+			f.write('\t\t')
+			if taps_list[i]>0:
+				f.write('32\'d%s' % str(abs(taps_list[i])) + ',\n')
+			elif taps_list[i]<0:
+				f.write('-32\'d%s' % str(abs(taps_list[i])) + ',\n')
+			else:
+				f.write('32\'d0,\n')
+
+		f.write('\t\t} ),\n')
+
+		f.write('\t.in(sin16),\n')
+		f.write('\t.out(%s)\n' % out_name)
+		f.write('\t);\n')
+
+
+	def dumpFile(self, f):
+		f.write('\ninteger i;\n')
+		f.write('real f;\n')
+		f.write('\ninitial\nbegin\n')
+
+		f.write('\t$dumpfile("%s");\n' % 'out.vcd')
+		f.write('\t$dumpvars(0, testbench);\n')
+		f.write('\tf = 100000;\n')
+		f.write('\tfor (i=0; i<%s; i=i+1)' % str(4000))
+
+		f.write('\tbegin\n')
+		f.write('\t\t%s(f);\n' % self.set_freq)
+		f.write('\t\t#1000;\n')
+		f.write('\t\tf = f + 1000;\n')
+		f.write('\tend\n')
+		f.write('\t$finish;\n')
+
+		f.write('end\n')
+
+		f.write('\nendmodule\n')
+
+
 	#главный метод с вызовом остальных методов
 	def newFile(self):
 		f = open(self.fileName, 'w')
+
 		self.startDesc(f)
 		self.moduleDesc(f)
 		self.clockDesc(f, 0, 25)
 		self.variableDesc(f, 0, 0, 0, 100)
 		self.funcSin(f)
+		self.setFreq(f, 100000.0)
+		self.posedgeClk(f)
+		self.filterDesc(f, self.taps_num, self.taps_list)
+		self.dumpFile(f)
+
 		f.close()

@@ -7,12 +7,20 @@
 
 import sys
 
+
 from filters_config import Filter
+from plotcanvas import PlotCanvas
+
+from gen_main import gen_main
+from gen_tb import gen_tb
+
 
 from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QComboBox,
-							QLineEdit, QInputDialog, QPushButton, QAction)
+							QLineEdit, QInputDialog, QPushButton, QAction, QMainWindow)
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QIntValidator
 from PyQt5.QtCore import Qt, pyqtSlot
+
+
 
 class Example(QWidget):
 
@@ -36,6 +44,9 @@ class Example(QWidget):
 		self.tapsNum(self)
 		self.generate_button(self)
 
+		#m = PlotCanvas(self, width=5, height=4)
+		#m.move(300, 300)
+
 		self.show()
 
 
@@ -47,7 +58,9 @@ class Example(QWidget):
 		self.backgroundColor(qp, size)
 
 		#if self.filter_type == 'Low-pass':
-		#	self.cutoff_low_pass()
+		#	print ('%s' % self.filter_type)
+		#	m = PlotCanvas(self, width=5, height=4)
+		#	m.move(0, 0)
 
 		#self.generate(size)
 		#print (self.filter_type, self.samplef, self.tapsn)
@@ -132,13 +145,17 @@ class Example(QWidget):
 			low_pass_filter = Filter().low_pass(
 				self.sample_freq,
 				self.taps_num,
-				50.0)
+				200.0)
+
+			tbFile = gen_tb(self.taps_num, low_pass_filter)
+
 		elif mode == 'Band-pass':
 			band_pass_filter = Filter().band_pass(
 				self.sample_freq,
 				self.taps_num,
 				500.0,
 				1200.0)
+
 		elif mode == 'High-pass':
 			high_pass_filter = Filter().high_pass(
 				self.sample_freq,
