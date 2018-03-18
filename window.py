@@ -7,28 +7,32 @@
 
 import sys
 
-
 from filters_config import Filter
 from plotcanvas import PlotCanvas
 
 from gen_main import gen_main
 from gen_tb import gen_tb
 
-
 from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QComboBox,
 							QLineEdit, QInputDialog, QPushButton, QAction, QMainWindow)
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QIntValidator
 from PyQt5.QtCore import Qt, pyqtSlot
 
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 
 
-class Example(QWidget):
+class MyWindow(QWidget):
 
 	title = '¯\_(ツ)_/¯'
-	width, height = 800, 500
+	width, height = 800, 600
+
+	data_w, data_h, nyq_rate = 0, 0, 0 #plot figure and so on
 
 	cutoff_freq_list = []
 	filter_type, sample_freq, taps_num = 0, 0, 0
+
 
 	def __init__(self):
 		super().__init__()
@@ -44,10 +48,11 @@ class Example(QWidget):
 		self.tapsNum(self)
 		self.generate_button(self)
 
-		#m = PlotCanvas(self, width=5, height=4)
-		#m.move(300, 300)
+		m = PlotCanvas(self, width=5, height=4)
+		m.plot(self.data_w, self.data_h, self.nyq_rate)
+		m.move(200, 150)
 
-		self.show()
+		#self.show()
 
 
 	def paintEvent(self, e):
@@ -59,8 +64,6 @@ class Example(QWidget):
 
 		#if self.filter_type == 'Low-pass':
 		#	print ('%s' % self.filter_type)
-		#	m = PlotCanvas(self, width=5, height=4)
-		#	m.move(0, 0)
 
 		#self.generate(size)
 		#print (self.filter_type, self.samplef, self.tapsn)
@@ -142,7 +145,7 @@ class Example(QWidget):
 
 	def click_generate_button(self, mode):
 		if mode == 'Low-pass':
-			low_pass_filter = Filter().low_pass(
+			low_pass_filter, self.data_w, self.data_h, self.nyq_rate = Filter().low_pass(
 				self.sample_freq,
 				self.taps_num,
 				200.0)
@@ -173,5 +176,8 @@ class Example(QWidget):
 
 if __name__ == '__main__':
 	app = QApplication(sys.argv)
-	ex = Example()
+
+	ex = MyWindow()
+	ex.show()
+	
 	sys.exit(app.exec_())

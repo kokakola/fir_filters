@@ -34,7 +34,7 @@ class Filter:
 
 		filtered_x = lfilter(taps_result, 1.0, x)
 
-		"""figure(1)
+		figure(1)
 		plot(taps_result, 'bo-', linewidth=2)
 		title('Filter coefficient %d' % taps)
 		grid(True)
@@ -50,12 +50,12 @@ class Filter:
 		ylim(-0.05, 1.05)
 		grid(True)
 
-		show()"""
+		show()
 
 		#print ('Filter class: low_pass filter. Freq = %s' % sample_freq)
 		#return signal.firwin(numtaps, freq)
 
-		return taps_int_16
+		return taps_int_16, w, h, nyq_rate
 
 	def high_pass(self, sample_freq, taps):
 
