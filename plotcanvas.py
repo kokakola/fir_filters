@@ -27,11 +27,11 @@ class PlotCanvas(FigureCanvas):
 
 	def plot(self, w, h, nyq_rate):
 
-		print ('halo')
-
 		ax = self.figure.add_subplot(111)
 		ax.plot((w/pi)*nyq_rate, absolute(h), 'r-')
 		ax.set_title('PyQt Matplotlib Example')
 
-		self.draw()
+		print ('def plot')
+		print (w, h, nyq_rate)
 
+		self.draw()

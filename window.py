@@ -9,6 +9,7 @@ import sys
 
 from filters_config import Filter
 from plotcanvas import PlotCanvas
+from test_canvas_2 import ThreadSample, MatplotlibWidget
 
 from gen_main import gen_main
 from gen_tb import gen_tb
@@ -17,10 +18,13 @@ from PyQt5.QtWidgets import (QApplication, QLabel, QWidget, QComboBox,
 							QLineEdit, QInputDialog, QPushButton, QAction, QMainWindow)
 from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QIntValidator
 from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5 import QtCore, QtWidgets
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 
 class MyWindow(QWidget):
@@ -31,6 +35,7 @@ class MyWindow(QWidget):
 	data_w, data_h, nyq_rate = 0, 0, 0 #plot figure and so on
 
 	cutoff_freq_list = []
+	fromFreq_var, toFreq_var = 0, 0
 	filter_type, sample_freq, taps_num = 0, 0, 0
 
 
@@ -46,11 +51,13 @@ class MyWindow(QWidget):
 		self.combo(self)
 		self.sampleFreq(self)
 		self.tapsNum(self)
+
+		self.fromFreq(self)
+		self.toFreq(self)
+
 		self.generate_button(self)
 
-		m = PlotCanvas(self, width=5, height=4)
-		m.plot(self.data_w, self.data_h, self.nyq_rate)
-		m.move(200, 150)
+		self.drawPlot(self)
 
 		#self.show()
 
@@ -102,19 +109,63 @@ class MyWindow(QWidget):
 	def tapsNum(self, text):
 
 		def on_click():
-			self.taps_num = int(self.taps.text())
+			self.taps_num = int(self.num_taps.text())
 			print (self.taps_num)
 
 		self.lbl = QLabel("Numbers of taps", self)
 		self.lbl.move(390, 12)
 
-		self.taps = QLineEdit(self)
-		self.taps.setValidator(QIntValidator(1, 40000, self))
-		self.taps.move(390, 30)
-		self.taps.resize(125, 23)
+		self.num_taps = QLineEdit(self)
+		self.num_taps.setValidator(QIntValidator(1, 40000, self))
+		self.num_taps.move(390, 30)
+		self.num_taps.resize(125, 23)
 
 		self.button = QPushButton('Set', self)
 		self.button.move(520, 30)
+		self.button.resize(40, 23)
+
+		self.button.clicked.connect(on_click)
+
+
+	def toFreq(self, text):
+
+		def on_click():
+			self.toFreq_var = float(self.tofreq.text())
+			print (self.toFreq_var)
+			#self.cutoff_freq_list.append(self.taps.text())
+			#print (self.cutoff_freq_list)
+
+		self.lbl = QLabel("to Freq.", self)
+		self.lbl.move(32, 130)
+
+		self.tofreq = QLineEdit(self)
+		self.tofreq.move(30, 148)
+		self.tofreq.resize(125, 23)
+
+		self.button = QPushButton('Set', self)
+		self.button.move(160, 148)
+		self.button.resize(40, 23)
+
+		self.button.clicked.connect(on_click)
+
+
+	def fromFreq(self, text):
+
+		def on_click():
+			self.fromFreq_var = float(self.fromfreq.text())
+			print (self.fromFreq_var)
+			#self.cutoff_freq_list.append(self.taps.text())
+			#print (self.cutoff_freq_list)
+
+		self.lbl = QLabel("from Freq.", self)
+		self.lbl.move(32, 80)
+
+		self.fromfreq = QLineEdit(self)
+		self.fromfreq.move(30, 98)
+		self.fromfreq.resize(125, 23)
+
+		self.button = QPushButton('Set', self)
+		self.button.move(160, 98)
 		self.button.resize(40, 23)
 
 		self.button.clicked.connect(on_click)
@@ -148,21 +199,31 @@ class MyWindow(QWidget):
 			low_pass_filter, self.data_w, self.data_h, self.nyq_rate = Filter().low_pass(
 				self.sample_freq,
 				self.taps_num,
-				200.0)
+				self.toFreq_var)
 
 			tbFile = gen_tb(self.taps_num, low_pass_filter)
 
 		elif mode == 'Band-pass':
-			band_pass_filter = Filter().band_pass(
+			band_pass_filter, self.data_w, self.data_h, self.nyq_rate = Filter().band_pass(
 				self.sample_freq,
 				self.taps_num,
-				500.0,
-				1200.0)
+				self.fromFreq_var,
+				self.toFreq_var)
+
+			tbFile = gen_tb(self.taps_num, band_pass_filter)
 
 		elif mode == 'High-pass':
-			high_pass_filter = Filter().high_pass(
+			high_pass_filter, self.data_w, self.data_h, self.nyq_rate = Filter().high_pass(
 				self.sample_freq,
-				self.taps_num)
+				self.taps_num,
+				self.fromFreq_var)
+
+			tbFile = gen_tb(self.taps_num, high_pass_filter)
+
+
+	def drawPlot(self, mode):
+
+		return 0
 
 
 	def generate_button(self, size):
@@ -172,6 +233,9 @@ class MyWindow(QWidget):
 		self.button.resize(100, 40)
 
 		self.button.clicked.connect(lambda: self.click_generate_button(self.filter_type))
+		self.button.clicked.connect(lambda: self.drawPlot('mode'))
+
+		print (self.data_w, self.data_h, self.nyq_rate)
 
 
 if __name__ == '__main__':
