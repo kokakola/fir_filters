@@ -1,5 +1,4 @@
 # fir_filters
 Разработка методов автоматизированной генерации поведенческих описаний цифровых фильтров
 
-Start:
-python window.py
+Start: python window.py
