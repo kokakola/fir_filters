@@ -36,35 +36,35 @@ class Filter:
 
 		#print (np.int16(np.rint(taps_result*2**15)))
 		taps_int_16 = np.int16(np.rint(taps_result*2**15))
-		print (taps_int_16)
+		#print (taps_int_16)
 
 		#print (taps_result)
 
 		filtered_x = lfilter(taps_result, 1.0, x)
 
-		figure(1), plot(taps_result, 'bo-', linewidth=2)
-		title('Filter coefficient %d' % taps), grid(True)
+		#figure(1), plot(taps_result, 'bo-', linewidth=2)
+		#title('Filter coefficient %d' % taps), grid(True)
 
-		figure(2), clf()
+		#figure(2), clf()
 		w, h = freqz(taps_result, worN=8000)
-		plot((w/pi)*nyq_rate, absolute(h), linewidth=2)
-		xlabel('Freq. (Hz)'), ylabel('Gain')
-		title('Freq. responce'), ylim(-0.05, 1.05), grid(True)
+		#plot((w/pi)*nyq_rate, absolute(h), linewidth=2)
+		#xlabel('Freq. (Hz)'), ylabel('Gain')
+		#title('Freq. responce'), ylim(-0.05, 1.05), grid(True)
 
 		###
 		delay = 0.5 * (N-1) / sample_freq
-		figure(3), plot(t, x)
-		plot(t-delay, filtered_x, 'r-')
-		plot(t[N-1:]-delay, filtered_x[N-1:], 'g', linewidth=4)
-		xlabel('dont know'), grid(True)
+		#figure(3), plot(t, x)
+		#plot(t-delay, filtered_x, 'r-')
+		#plot(t[N-1:]-delay, filtered_x[N-1:], 'g', linewidth=4)
+		#xlabel('dont know'), grid(True)
 		###
 
-		show()
+		#show()
 
 		#print ('Filter class: low_pass filter. Freq = %s' % sample_freq)
 		#return signal.firwin(numtaps, freq)
 
-		return taps_int_16, w, h, nyq_rate
+		return taps_int_16, w, h, nyq_rate, taps_result
 
 	def high_pass(self, sample_freq, taps, cutoff_freq):
 
@@ -87,22 +87,22 @@ class Filter:
 		taps_result = signal.firwin(taps, fire_freq, pass_zero=False)
 
 		taps_int_16 = np.int16(np.rint(taps_result*2**15))
-		print (taps_int_16)
+		#print (taps_int_16)
 
 		filtered_x = lfilter(taps_result, 1.0, x)
 
-		figure(1), plot(taps_result, 'bo-', linewidth=2)
-		title('Filter coefficient %d' % taps), grid(True)
+		#figure(1), plot(taps_result, 'bo-', linewidth=2)
+		#title('Filter coefficient %d' % taps), grid(True)
 
-		figure(2), clf()
+		#figure(2), clf()
 		w, h = freqz(taps_result, worN=8000)
-		plot((w/pi)*nyq_rate, absolute(h), linewidth=2)
-		xlabel('Freq. (Hz)'), ylabel('Gain')
-		title('Freq. responce'), ylim(-0.05, 1.05), grid(True)
+		#plot((w/pi)*nyq_rate, absolute(h), linewidth=2)
+		#xlabel('Freq. (Hz)'), ylabel('Gain')
+		#title('Freq. responce'), ylim(-0.05, 1.05), grid(True)
 
-		show()
+		#show()
 
-		return taps_int_16, w, h, nyq_rate
+		return taps_int_16, w, h, nyq_rate, taps_result
 
 		#print ('Filter class: high_pass filter. Freq = %s' % sample_freq)
 		#return signal.firwin(numtaps, [f1, f2], pass_zero=False)
@@ -126,18 +126,18 @@ class Filter:
 		taps_int_16 = np.int16(np.rint(taps_result*2**15))
 		print (taps_int_16)
 
-		figure(1), plot(taps_result, 'bo-', linewidth=2)
-		title('Filter coefficient %d' % taps), grid(True)
+		#figure(1), plot(taps_result, 'bo-', linewidth=2)
+		#title('Filter coefficient %d' % taps), grid(True)
 
-		figure(2), clf()
+		#figure(2), clf()
 		w, h = freqz(b, a, worN=2000)
-		plot((sample_freq * 0.5 / pi) * w, abs(h))
-		xlabel('Freq. (Hz)'), ylabel('Gain')
-		title('Freq. responce'), ylim(-0.05, 1.05), grid(True)
+		#plot((sample_freq * 0.5 / pi) * w, abs(h))
+		#xlabel('Freq. (Hz)'), ylabel('Gain')
+		#title('Freq. responce'), ylim(-0.05, 1.05), grid(True)
 
-		show()
+		#show()
 
-		return taps_int_16, w, h, nyq_rate
+		return taps_int_16, w, h, nyq_rate, taps_result
 
 		#print ('Filter class: band_pass filter. Freq = %s' % sample_freq)
 		#return signal.firwin(numtaps, freq, pass_zero=False)
