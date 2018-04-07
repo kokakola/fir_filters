@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+#pyuic5 -x mainwindow.ui -o mainwindow.py
+
+#git init
+#git add *
+#git commit -m "continue pyqt5 and first filters"
+#git push origin master
+
 import sys
 import os
 
@@ -7,7 +14,7 @@ import time
 import datetime
 
 from filters_config import Filter
-from test_canvas import PlotCanvas
+from PlotCanvas import PlotCanvas
 from gen_main import gen_main
 from gen_tb import gen_tb
 
@@ -17,17 +24,19 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
 
-	title = '¯\_(ツ)_/¯'
+	title = 'Configurator'
 	width, height = 900, 600
 
 	filter_type = ''
-	console_log = 	(str('%s' % (datetime.datetime.now().strftime('%H:%M:%S'))) + 
-					' | Start program\n')
+	console_log = 'Start program\n'
 
 	sampleFreq, tapsNum, fromFreq, toFreq = 0, 0, 0, 0
 	data_w, data_h, nyq_rate = 0, 0, 0
 	text_in_tab = 'text text'
 	text_verilog_rtl, text_verilog_tb = '', ''
+
+	rtlFile = gen_main()
+	tbFile = gen_tb()
 
 
 	def setupUi(self, MainWindow):
@@ -196,12 +205,15 @@ class Ui_MainWindow(object):
 		sizePolicy.setVerticalStretch(0)
 		sizePolicy.setHeightForWidth(self.scrollArea.sizePolicy().hasHeightForWidth())
 		self.scrollArea.setSizePolicy(sizePolicy)
-		self.scrollArea.setMinimumSize(QtCore.QSize(0, 120))
+		self.scrollArea.setMinimumSize(QtCore.QSize(0, 80))
 		self.scrollArea.setWidgetResizable(True)
 		self.scrollArea.setObjectName("scrollArea")
-
+		
 		self.scrollAreaWidgetContents_2 = QtWidgets.QLabel()
 		self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 793, 118))
+		#self.scrollAreaWidgetContents_2 = QtWidgets.QTextEdit()
+		#self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 793, 78))
+		#self.scrollAreaWidgetContents_2.setReadOnly(True)
 		self.scrollAreaWidgetContents_2.setObjectName("scrollAreaWidgetContents_2")
 		self.scrollAreaWidgetContents_2.setText(self.console_log)
 
@@ -216,6 +228,91 @@ class Ui_MainWindow(object):
 		self.pushButton_set = QtWidgets.QPushButton('Set', self.centralwidget)
 		self.pushButton_set.setObjectName("pushButton_set")
 		self.gridLayout_4.addWidget(self.pushButton_set, 5, 0, 1, 1)
+
+		self.pushButton_preset = QtWidgets.QPushButton('Preset', self.centralwidget)
+		self.pushButton_preset.setObjectName("pushButton_preset")
+		self.gridLayout_4.addWidget(self.pushButton_preset, 6, 0, 1, 1)
+
+		self.pushButton_save = QtWidgets.QPushButton('Save', self.centralwidget)
+		self.pushButton_save.setObjectName("pushButton_save")
+		self.gridLayout_4.addWidget(self.pushButton_save, 6, 1, 1, 1)
+
+		self.pushButton_reset = QtWidgets.QPushButton('RESET', self.centralwidget)
+		self.pushButton_reset.setObjectName("pushButton_reset")
+		self.gridLayout_4.addWidget(self.pushButton_reset, 7, 0, 1, 2)
+
+
+		def logWrite(command, code):
+			#self.console_log += str('{:>10}'.format('%s' % (datetime.datetime.now().strftime('%H:%M:%S'))))
+
+			self.console_log += command + '\n'
+			#if code == -1: #error message
+				#self.scrollAreaWidgetContents_2.setStyleSheet("color: rgb(255, 0, 0);")
+			self.scrollAreaWidgetContents_2.setText(self.console_log)
+			self.scrollArea.verticalScrollBar().setSliderPosition(self.scrollArea.verticalScrollBar().maximum())
+
+
+		def on_save_click():
+
+			self.rtlFile.saveFile()
+			self.tbFile.saveFile()
+
+			logWrite('Click on \'Save\' button.', 0)
+			print ('save click')
+
+		self.pushButton_save.clicked.connect(on_save_click)
+
+
+		def on_preset_click():
+
+			sampleFreq = float(self.lineEdit_sample_freq.text())
+			status, orders_taps = '', -1
+
+			if self.filter_type == 'Low-pass':
+				cutoff_from = 0.0
+				cutoff_to = float(self.lineEdit_to_freq.text())
+
+				status, orders_taps = Filter().orderNum(sampleFreq, cutoff_from, cutoff_to)
+				#print (orders_taps)
+
+			elif self.filter_type == 'Band-pass':
+				cutoff_from = float(self.lineEdit_from_freq.text())
+				cutoff_to = float(self.lineEdit_to_freq.text())
+
+				status, orders_taps = Filter().orderNum(sampleFreq, cutoff_from, cutoff_to)
+				print ('preset band-pass')
+
+			elif self.filter_type == 'High-pass':
+				cutoff_from = float(self.lineEdit_from_freq.text())
+				cutoff_to = sampleFreq * 0.5
+
+				status, orders_taps = Filter().orderNum(sampleFreq, cutoff_from, cutoff_to)
+				print ('preset high-pass')
+
+			#self.lineEdit_taps_number.setText(str(Filter().orderNum(self.sampleFreq)))
+
+			self.lineEdit_taps_number.setText(str(orders_taps))
+			logWrite('Click on \'Preset\' button.', 0)
+			print ('preset click')
+
+		self.pushButton_preset.clicked.connect(on_preset_click)
+
+
+		def on_reset_click():
+
+			self.type_of_filter.setCurrentIndex(0)
+
+			self.lineEdit_sample_freq.setText('0')
+			self.lineEdit_taps_number.setText('0')
+
+			self.lineEdit_from_freq.setText('0')
+			self.lineEdit_to_freq.setText('0')
+
+			logWrite('Click on \'Reset\' button.', 0)
+			print ('reset click')
+
+		self.pushButton_reset.clicked.connect(on_reset_click)
+
 
 		def on_set_click():
 
@@ -235,81 +332,93 @@ class Ui_MainWindow(object):
 			#self.fromFreq = float(self.lineEdit_from_freq.text())
 			#self.toFreq = float(self.lineEdit_to_freq.text())
 
+			logWrite('Click on \'Set\' button.', 0)
 			print ('set click')
 
 		self.pushButton_set.clicked.connect(on_set_click)
 
 		def on_generate_click():
 
+			status = ''
+
 			if self.filter_type == 'Low-pass':
 
 				#print (self.sampleFreq, self.tapsNum, self.fromFreq, self.toFreq)
 
-				low_pass_filter, self.data_w, self.data_h, self.nyq_rate, taps_numbers = Filter().low_pass(
+				status, low_pass_filter, self.data_w, self.data_h, self.nyq_rate, taps_numbers = Filter().low_pass(
 					self.sampleFreq,
 					self.tapsNum,
 					self.toFreq)
 
-				self.graphic_in_tab_1.plot_grap_1(self.data_w, self.data_h, self.nyq_rate)
-				self.graphic_in_tab_2.plot_grap_2(taps_numbers)
+				if status == 'success':
+					self.graphic_in_tab_1.plot_grap_1(self.data_w, self.data_h, self.nyq_rate)
+					self.graphic_in_tab_2.plot_grap_2(taps_numbers)
 
-				tbFile = gen_tb(self.tapsNum, low_pass_filter)
-				self.textEditorTestBench.setText(tbFile.returnText())
+					self.tbFile.genFile(self.tapsNum, low_pass_filter)
+					self.textEditorTestBench.setText(self.tbFile.returnText())
 
-				rtlFile = gen_main()
-				self.textEditorRTL.setText(rtlFile.returnText())
+					#rtlFile = gen_main()
+					self.rtlFile.newFile()
+					self.textEditorRTL.setText(self.rtlFile.returnText())
 
-				#print (low_pass_filter)
+					#print (low_pass_filter)
 
 			elif self.filter_type == 'Band-pass':
 
 				#print (self.sampleFreq, self.tapsNum, self.fromFreq, self.toFreq)
 
-				band_pass_filter, self.data_w, self.data_h, self.nyq_rate, taps_numbers = Filter().band_pass(
+				status, band_pass_filter, self.data_w, self.data_h, self.nyq_rate, taps_numbers = Filter().band_pass(
 					self.sampleFreq,
 					self.tapsNum,
 					self.fromFreq,
 					self.toFreq)
 
-				self.graphic_in_tab_1.plot_grap_1(self.data_w, self.data_h, self.nyq_rate)
-				self.graphic_in_tab_2.plot_grap_2(taps_numbers)
+				if status == 'success':
+					self.graphic_in_tab_1.plot_grap_1(self.data_w, self.data_h, self.nyq_rate)
+					self.graphic_in_tab_2.plot_grap_2(taps_numbers)
 
-				tbFile = gen_tb(self.tapsNum, band_pass_filter)
-				self.textEditorTestBench.setText(tbFile.returnText())
+					self.tbFile.genFile(self.tapsNum, band_pass_filter)
+					self.textEditorTestBench.setText(self.tbFile.returnText())
 
-				rtlFile = gen_main()
-				self.textEditorRTL.setText(rtlFile.returnText())
+					#rtlFile = gen_main()
+					self.rtlFile.newFile()
+					self.textEditorRTL.setText(self.rtlFile.returnText())
 
-				#print (band_pass_filter)
+					#print (band_pass_filter)
 
 			elif self.filter_type == 'High-pass':
 
 				#print (self.sampleFreq, self.tapsNum, self.fromFreq, self.toFreq)
 
-				high_pass_filter, self.data_w, self.data_h, self.nyq_rate, taps_numbers = Filter().high_pass(
+				status, high_pass_filter, self.data_w, self.data_h, self.nyq_rate, taps_numbers = Filter().high_pass(
 					self.sampleFreq,
 					self.tapsNum,
 					self.fromFreq)
 
-				self.graphic_in_tab_1.plot_grap_1(self.data_w, self.data_h, self.nyq_rate)
-				self.graphic_in_tab_2.plot_grap_2(taps_numbers)
+				if status == 'success':
+					self.graphic_in_tab_1.plot_grap_1(self.data_w, self.data_h, self.nyq_rate)
+					self.graphic_in_tab_2.plot_grap_2(taps_numbers)
 
-				tbFile = gen_tb(self.tapsNum, high_pass_filter)
-				self.textEditorTestBench.setText(tbFile.returnText())
+					#tbFile = gen_tb(self.tapsNum, high_pass_filter)
+					self.tbFile.genFile(self.tapsNum, high_pass_filter)
+					self.textEditorTestBench.setText(self.tbFile.returnText())
 
-				rtlFile = gen_main()
-				self.textEditorRTL.setText(rtlFile.returnText())
+					#rtlFile = gen_main()
+					self.rtlFile.newFile()
+					self.textEditorRTL.setText(self.rtlFile.returnText())
 
-				#print (high_pass_filter)
+					#print (high_pass_filter)
 
+			logWrite('Click on \'Generate\' button.', 0)
+			if status != 'success':
+				logWrite(status, 0)
 			print ('generate click')
 
 		self.pushButton_generate.clicked.connect(on_generate_click)
 
 		def onActivated(text):
 			self.filter_type = text
-			self.console_log += (str('{:>10}'.format('%s' % (datetime.datetime.now().strftime('%H:%M:%S')))) +
-								str('{:>10}'.format('%s' % str('| Choose type of filter: ' + self.filter_type + '\n'))))
+			logWrite(str('Choose type of filter: ' + self.filter_type), 0)
 			
 			print ('choose filter')
 			
@@ -334,9 +443,6 @@ class Ui_MainWindow(object):
 				self.lineEdit_from_freq.setReadOnly(False)
 				self.lineEdit_to_freq.setReadOnly(False)
 
-
-			self.scrollAreaWidgetContents_2.setText(self.console_log)
-			self.scrollArea.verticalScrollBar().setSliderPosition(self.scrollArea.verticalScrollBar().maximum())	
 
 		self.type_of_filter.activated[str].connect(onActivated)
 

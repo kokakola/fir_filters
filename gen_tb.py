@@ -12,16 +12,17 @@ class gen_tb:
 	set_freq = 'set_freq'
 	main_text = ''
 
-	def __init__(self, taps_num, taps_list):
+	def __init__(self):
 		self.fileName = 'test_file_tb.v'
+
+	def genFile(self, taps_num, taps_list):
 		self.taps_num = taps_num
 		self.taps_list = taps_list
-
 		self.newFile()
 
 
 	#описание к файлу
-	def startDesc(self, f):
+	def startDesc(self):
 		#f.write('//\n// Description of \"%s\"' % self.fileName)
 		#f.write('\n// Date: %s' % datetime.datetime.today().strftime('%d.%m.%Y %H:%M:%S'))
 		#f.write('\n// Author: %s\n//\n' % getpass.getuser())
@@ -36,14 +37,14 @@ class gen_tb:
 
 
 	#описание модуля
-	def moduleDesc(self, f):
+	def moduleDesc(self):
 		#f.write('module %s ();\n\n' % self.fileName[:-2])
 
 		self.main_text += 'module %s ();\n\n' % self.fileName[:-2]
 
 
 	#описание клока
-	def clockDesc(self, f, startTime, periodTime):
+	def clockDesc(self, startTime, periodTime):
 		#f.write('reg %s;\ninitial %s = %d;\n' % (self.clkName, self.clkName, startTime))
 		#f.write('always\n\t#%d %s = ~%s;\n\n' % (periodTime, self.clkName, self.clkName))
 
@@ -52,7 +53,7 @@ class gen_tb:
 
 
 	#описание переменных
-	def variableDesc(self, f, last_time, current_time, angle, freq):
+	def variableDesc(self, last_time, current_time, angle, freq):
 		#f.write('real PI=3.14159265358979323846;\n')
 		#f.write('real last_time = %d;\n' % last_time)	#sec
 		#f.write('real current_time = %d;\n' % current_time)	#sec
@@ -70,7 +71,7 @@ class gen_tb:
 						'reg signed [15:0]sin16;\n'
 
 
-	def funcSin(self, f):
+	def funcSin(self):
 		y, y3, y5, y7 = 1.570794, 0.645962, 0.079692, 0.004681712
 
 		#f.write('\nfunction real sin;\ninput x;\nreal x;\n')
@@ -101,7 +102,7 @@ class gen_tb:
 						'\tend\nendfunction\n'
 
 
-	def setFreq(self, f, freq):
+	def setFreq(self, freq):
 		#f.write('\ntask %s;\n' % self.set_freq)
 		#f.write('input f;\n')
 		#f.write('real f;\n')
@@ -116,7 +117,7 @@ class gen_tb:
 						'\tfreq_x100kHz = f / %s;\n' % str(freq) + 'end\n'
 
 
-	def posedgeClk(self, f):
+	def posedgeClk(self):
 		#f.write('\nalways @(posedge tb_clk)\n')
 		#f.write('begin\n')
 		#f.write('\tcurrent_time = $realtime;\n')
@@ -142,7 +143,7 @@ class gen_tb:
 						'\tlast_time = cuttent_time;\n' + 'end\n'
 
 
-	def filterDesc(self, f, taps_num, taps_list):
+	def filterDesc(self, taps_num, taps_list):
 		out_name = 'out_lowpass'
 		num_taps = taps_num
 		dimension = 57
@@ -185,7 +186,7 @@ class gen_tb:
 						'\t);\n'
 
 
-	def dumpFile(self, f):
+	def dumpFile(self):
 		#f.write('\ninteger i;\n')
 		#f.write('real f;\n')
 		#f.write('\ninitial\nbegin\n')
@@ -217,20 +218,21 @@ class gen_tb:
 
 	#главный метод с вызовом остальных методов
 	def newFile(self):
+
+		self.startDesc()
+		self.moduleDesc()
+		self.clockDesc(0, 25)
+		self.variableDesc(0, 0, 0, 100)
+		self.funcSin()
+		self.setFreq(100000.0)
+		self.posedgeClk()
+		self.filterDesc(self.taps_num, self.taps_list)
+		self.dumpFile()
+
+
+	def saveFile(self):
 		f = open(self.fileName, 'w')
-
-		self.startDesc(f)
-		self.moduleDesc(f)
-		self.clockDesc(f, 0, 25)
-		self.variableDesc(f, 0, 0, 0, 100)
-		self.funcSin(f)
-		self.setFreq(f, 100000.0)
-		self.posedgeClk(f)
-		self.filterDesc(f, self.taps_num, self.taps_list)
-		self.dumpFile(f)
-
 		f.write(self.main_text)
-
 		f.close()
 
 

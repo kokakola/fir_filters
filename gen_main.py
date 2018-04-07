@@ -12,10 +12,9 @@ class gen_main:
 
 	def __init__(self):
 		self.fileName = 'test_file.v'
-		self.newFile()
 
 
-	def startDesc(self, f):
+	def startDesc(self):
 		#f.write('//\n// Description of \"%s\"' % self.fileName)
 		#f.write('\n// Date: %s' % datetime.datetime.today().strftime('%d.%m.%Y %H:%M:%S'))
 		#f.write('\n// Author: %s\n//\n\n' % getpass.getuser())
@@ -25,13 +24,13 @@ class gen_main:
 							('\n// Author: %s\n//\n\n' % getpass.getuser()))
 
 
-	def moduleDesc(self, f):
+	def moduleDesc(self):
 		#f.write('module %s (\n\tclk,\n\tcoefs,\n\tin,\n\tout\n);\n' % self.fileName[:-2])
 
 		self.main_text += 'module %s (\n\tclk,\n\tcoefs,\n\tin,\n\tout\n);\n' % self.fileName[:-2]
 
 
-	def paramDesc(self ,f):
+	def paramDesc(self):
 		p, l = 'parameter', 'localparam'
 		#f.write('\n%s IWIDTH = %d;\n' % (p, 16))
 		#f.write('%s CWIDTH = %d;\n' % (p, 16))
@@ -45,7 +44,7 @@ class gen_main:
 						'%s RWIDTH = (MWIDTH+TAPS-1);\n' % l
 
 
-	def generDesc(self, f):
+	def generDesc(self):
 		#f.write('\ngenvar i;\ngenerate\n')
 		#f.write('\tfor(i=0; i<TAPS; i=i+1)\n')
 		#f.write('\tbegin:tap\n\t\treg [IWIDTH-1:0] r=0;\n')
@@ -85,7 +84,7 @@ class gen_main:
 						'\t\tend\n\tend\nendgenerate\n'
 
 
-	def resultDesc(self, f):
+	def resultDesc(self):
 		#f.write('\nreg [RWIDTH-1:0]result;\n')
 		#f.write('always @(posedge clk)\n\tresult <= tap[TAPS-1].a;\n')
 		#f.write('\nassign out = result;\n')
@@ -97,17 +96,19 @@ class gen_main:
 
 
 	def newFile(self):
+
+		self.startDesc()
+		self.moduleDesc()
+		self.paramDesc()
+		self.generDesc()
+		self.resultDesc()
+
+
+	def saveFile(self):
 		f = open(self.fileName, 'w')
-		
-		self.startDesc(f)
-		self.moduleDesc(f)
-		self.paramDesc(f)
-		self.generDesc(f)
-		self.resultDesc(f)
-
 		f.write(self.main_text)
-
 		f.close()
+
 
 	def returnText(self):
 		self.main_text = re.sub('\t', '    ', self.main_text)
