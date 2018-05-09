@@ -99,3 +99,42 @@ class Filter:
 		except Exception as e:
 			return ('> Error: ' + str(e)), [], 0, 0, 0, 0
 
+
+	def band_stop(self, samle_freq, taps, lowcut, highcut):
+
+		nyq_rate = samle_freq * 0.5
+		low = lowcut / nyq_rate
+		high = highcut / nyq_rate
+
+		try:
+			b, a = butter(5, [low, high], btype='bandstop')
+			taps_result = signal.firwin(taps, [low, high])
+
+			taps_int_16 = np.int16(np.rint(taps_result*2**15))
+			w, h = freqz(b, a, worN=2000)
+
+			return 'success', taps_int_16, w, h, nyq_rate, taps_result
+
+		except Exception as e:
+			return ('> Error: ' + str(e)), [], 0, 0, 0, 0
+
+
+	def multi_band(self, sample_freq, taps, lowcut_1, highcut_1, lowcut_2, highcut_2):
+
+		nyq_rate = sample_freq * 0.5
+
+		low_1 = lowcut_1 / nyq_rate
+		high_1 = highcut_1 / nyq_rate
+
+		low_2 = lowcut_2 / nyq_rate
+		high_2 = highcut_2 / nyq_rate
+
+		try:
+			taps_result = signal.firwin(taps, [low_1, high_1, low_2, high_2], pass_zero=False)
+			taps_int_16 = np.int16(np.rint(taps_result*2**15))
+
+			return 'success', taps_int_16, 0, 0, nyq_rate, taps_result
+
+		except Exception as e:
+			return ('> Error: ' + str(e)), [], 0, 0, 0, 0
+

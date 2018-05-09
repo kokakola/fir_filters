@@ -12,6 +12,7 @@ import os
 
 import time
 import datetime
+import logging
 
 from filters_config import Filter
 from PlotCanvas import PlotCanvas
@@ -139,7 +140,13 @@ class Ui_MainWindow(object):
 		sizePolicy.setHeightForWidth(self.type_of_filter.sizePolicy().hasHeightForWidth())
 		self.type_of_filter.setSizePolicy(sizePolicy)
 		self.type_of_filter.setObjectName("type_of_filter")
-		self.type_of_filter.addItems(["", "Low-pass", "Band-pass", "High-pass"])
+		self.type_of_filter.addItems(["", 
+			"Low-pass", 
+			"Band-pass", 
+			"High-pass", 
+			"Band-stop", 
+			"Multi-Band"])
+		self.type_of_filter.model().item(5).setEnabled(False)
 
 		self.gridLayout_4.addWidget(self.type_of_filter, 0, 0, 1, 1)
 		self.gridLayout.addLayout(self.gridLayout_4, 0, 0, 1, 1)
@@ -237,9 +244,13 @@ class Ui_MainWindow(object):
 		self.pushButton_save.setObjectName("pushButton_save")
 		self.gridLayout_4.addWidget(self.pushButton_save, 6, 1, 1, 1)
 
+		self.pushButton_import_rtl = QtWidgets.QPushButton('Import RTL', self.centralwidget)
+		self.pushButton_import_rtl.setObjectName("pushButton_import_rtl")
+		self.gridLayout_4.addWidget(self.pushButton_import_rtl, 7, 0, 1, 1)
+
 		self.pushButton_reset = QtWidgets.QPushButton('RESET', self.centralwidget)
 		self.pushButton_reset.setObjectName("pushButton_reset")
-		self.gridLayout_4.addWidget(self.pushButton_reset, 7, 0, 1, 2)
+		self.gridLayout_4.addWidget(self.pushButton_reset, 7, 1, 1, 1)
 
 
 		def logWrite(command, code):
@@ -250,6 +261,23 @@ class Ui_MainWindow(object):
 				#self.scrollAreaWidgetContents_2.setStyleSheet("color: rgb(255, 0, 0);")
 			self.scrollAreaWidgetContents_2.setText(self.console_log)
 			self.scrollArea.verticalScrollBar().setSliderPosition(self.scrollArea.verticalScrollBar().maximum())
+
+
+		def import_rtl_click():
+
+			directory = ''
+			dlg = QtWidgets.QFileDialog()
+			dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
+			#dlg.setFilter("Verilog files (*.v)")
+
+			if dlg.exec_():
+				filenames = dlg.selectedFiles()
+				directory = filenames[0]
+
+			self.rtlFile.readFile(directory)
+			self.textEditorRTL.setText(self.rtlFile.returnImportText())
+
+		self.pushButton_import_rtl.clicked.connect(import_rtl_click)
 
 
 		def on_save_click():
@@ -308,6 +336,9 @@ class Ui_MainWindow(object):
 			self.lineEdit_from_freq.setText('0')
 			self.lineEdit_to_freq.setText('0')
 
+			self.textEditorTestBench.setText(self.tbFile.resetText())
+			self.textEditorRTL.setText(self.rtlFile.resetText())
+
 			logWrite('Click on \'Reset\' button.', 0)
 			print ('reset click')
 
@@ -326,6 +357,10 @@ class Ui_MainWindow(object):
 				self.fromFreq = float(self.lineEdit_from_freq.text())
 
 			elif self.filter_type == 'Band-pass':
+				self.fromFreq = float(self.lineEdit_from_freq.text())
+				self.toFreq = float(self.lineEdit_to_freq.text())
+
+			elif self.filter_type == 'Band-stop':
 				self.fromFreq = float(self.lineEdit_from_freq.text())
 				self.toFreq = float(self.lineEdit_to_freq.text())
 
@@ -359,7 +394,10 @@ class Ui_MainWindow(object):
 
 					#rtlFile = gen_main()
 					self.rtlFile.newFile()
-					self.textEditorRTL.setText(self.rtlFile.returnText())
+					if self.rtlFile.returnImportText() == '':
+						self.textEditorRTL.setText(self.rtlFile.returnText())
+					else:
+						self.textEditorRTL.setText(self.rtlFile.returnImportText())
 
 					#print (low_pass_filter)
 
@@ -382,8 +420,10 @@ class Ui_MainWindow(object):
 
 					#rtlFile = gen_main()
 					self.rtlFile.newFile()
-					self.textEditorRTL.setText(self.rtlFile.returnText())
-
+					if self.rtlFile.returnImportText() == '':
+						self.textEditorRTL.setText(self.rtlFile.returnText())
+					else:
+						self.textEditorRTL.setText(self.rtlFile.returnImportText())
 					#print (band_pass_filter)
 
 			elif self.filter_type == 'High-pass':
@@ -405,9 +445,33 @@ class Ui_MainWindow(object):
 
 					#rtlFile = gen_main()
 					self.rtlFile.newFile()
-					self.textEditorRTL.setText(self.rtlFile.returnText())
-
+					if self.rtlFile.returnImportText() == '':
+						self.textEditorRTL.setText(self.rtlFile.returnText())
+					else:
+						self.textEditorRTL.setText(self.rtlFile.returnImportText())
 					#print (high_pass_filter)
+
+			elif self.filter_type == 'Band-stop':
+
+				status, band_stop_filter, self.data_w, self.data_h, self.nyq_rate, taps_numbers = Filter().band_stop(
+					self.sampleFreq,
+					self.tapsNum,
+					self.fromFreq,
+					self.toFreq)
+
+				if status == 'success':
+					self.graphic_in_tab_1.plot_grap_1(self.data_w, self.data_h, self.nyq_rate)
+					self.graphic_in_tab_2.plot_grap_2(taps_numbers)
+
+					self.tbFile.genFile(self.tapsNum, band_stop_filter)
+					self.textEditorTestBench.setText(self.tbFile.returnText())
+
+					self.rtlFile.newFile()
+					if self.rtlFile.returnImportText() == '':
+						self.textEditorRTL.setText(self.rtlFile.returnText())
+					else:
+						self.textEditorRTL.setText(self.rtlFile.returnImportText())
+
 
 			logWrite('Click on \'Generate\' button.', 0)
 			if status != 'success':
