@@ -6,6 +6,8 @@ import getpass
 
 from time import strftime
 
+#test
+
 class gen_tb:
 
 	clkName = 'tb_clk'

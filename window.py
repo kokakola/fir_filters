@@ -23,6 +23,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+#test
+
 class Ui_MainWindow(object):
 
 	title = 'Configurator'
